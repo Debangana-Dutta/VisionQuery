@@ -1,0 +1,53 @@
+# =============================================================================
+# VisionQuery central configuration
+# All hyperparameters used by src/train.py, src/evaluate.py and the notebooks
+# live here so nothing important is hard-coded in the code itself.
+# =============================================================================
+
+# --- Model -------------------------------------------------------------------
+model:
+  name: "Salesforce/blip-vqa-base"   # pretrained checkpoint on the HF Hub
+  max_question_length: 32            # tokens, question is short so this is generous
+  max_answer_length: 8               # VQA answers are almost always 1-3 words
+
+# --- Dataset -------------------------------------------------------------------
+dataset:
+  # HuggingFace dataset id used for VQAv2. "HuggingFaceM4/VQAv2" mirrors the
+  # official VQAv2 annotations (image, question, list of 10 human answers).
+  hf_dataset_name: "HuggingFaceM4/VQAv2"
+  # Number of TRAIN examples to actually use. Keep this small for a Colab T4.
+  # Scale this up once you have more compute / more session time.
+  train_subset_size: 3000
+  val_subset_size: 500
+  # Local cache dir for the extracted subset (kept small, safe to .gitignore)
+  cache_dir: "./data_cache"
+  seed: 42
+
+# --- Training -------------------------------------------------------------------
+training:
+  batch_size: 4          # T4 (16GB) safe default with fp16; raise if you have headroom
+  learning_rate: 5e-5
+  num_epochs: 3
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+  fp16: true              # mixed precision - needed to fit comfortably on a T4
+  gradient_accumulation_steps: 4   # effective batch size = batch_size * this
+  save_every_epoch: true
+  output_dir: "./models/visionquery_blip_vqa_3000_lr1e6"
+  log_file: "./models/train_log.csv"
+
+# --- Evaluation -------------------------------------------------------------------
+evaluation:
+  # Which checkpoint evaluate.py loads by default. Change after training.
+  checkpoint_dir: "./models/visionquery_blip_vqa_3000_lr1e6"
+  num_qualitative_examples: 8
+  qualitative_output_dir: "./models/qualitative_examples"
+
+# --- Reproducibility -------------------------------------------------------------------
+reproducibility:
+  seed: 42
+  # Fill these in after you actually run things in Colab (see notebook 01)
+  torch_version: "[TO BE RECORDED IN COLAB]"
+  transformers_version: "[TO BE RECORDED IN COLAB]"
+  cuda_version: "[TO BE RECORDED IN COLAB]"
+  gpu_used: "[TO BE RECORDED IN COLAB]"
