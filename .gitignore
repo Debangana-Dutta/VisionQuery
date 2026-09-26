@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+
+# Python tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Data and caches
+data_cache/
+*.cache
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Model checkpoints / large ML artifacts
+models/*/model.safetensors
+models/*/pytorch_model.bin
+models/*/tf_model.h5
+models/*/flax_model.msgpack
+models/*/*.bin
+models/*/*.pt
+models/*/*.pth
+
+# Generated model outputs
+models/qualitative_examples/
+
+# Next.js
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+
+# Frontend environment files
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
