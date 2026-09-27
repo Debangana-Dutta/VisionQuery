@@ -123,16 +123,6 @@ Generated Answer
 
 ---
 
-# 📸 Proof of Work
-
-The following screenshots show the actual **dataset preparation, controlled experimentation, evaluation, and end-to-end VQA inference** performed during the development of VisionQuery.
-
-<p align="center">
-  <img src="screenshots/01_proof_of_work.png" alt="VisionQuery proof of work">
-</p>
-
----
-
 # 🤖 Model Architecture
 
 VisionQuery uses:
@@ -195,6 +185,14 @@ For the controlled experiment, **3,000 VQAv2 examples** were selected for superv
 
 The controlled subset makes experimentation faster and allows different configurations to be compared consistently.
 
+### Dataset Preparation
+
+The initial training preparation and controlled subset creation were performed in Google Colab.
+
+<p align="center">
+  <img src="screenshots/01_training_subset_200.png" alt="VQAv2 training subset preparation">
+</p>
+
 ---
 
 # 🧪 Learning-Rate Experiments
@@ -202,11 +200,11 @@ The controlled subset makes experimentation faster and allows different configur
 Different learning rates were evaluated using the same controlled setup.
 
 | Configuration            | Validation Accuracy |
-| ------------------------ | ------------------- |
-| Baseline BLIP pretrained | 85.87%              |
-| Fine-tuning, LR = 2e-5   | 54.87%              |
-| Fine-tuning, LR = 5e-6   | 79.20%              |
-| Fine-tuning, LR = 1e-6   | **85.93%**          |
+| ------------------------ | ------------------: |
+| Baseline BLIP pretrained |              85.87% |
+| Fine-tuning, LR = 2e-5   |              54.87% |
+| Fine-tuning, LR = 5e-6   |              79.20% |
+| Fine-tuning, LR = 1e-6   |          **85.93%** |
 
 ### Observation
 
@@ -268,6 +266,34 @@ Training was performed using:
 * VQAv2
 * BLIP VQA
 * Reproducible random seed
+
+### Training Progress
+
+The training workflow was executed in Google Colab, including the prepared VQAv2 examples used for the fine-tuning experiment.
+
+<p align="center">
+  <img src="screenshots/02_training_progress_2709.png" alt="VisionQuery training progress">
+</p>
+
+---
+
+# 📈 Evaluation Results
+
+The controlled evaluation produced a validation accuracy of **85.93%** for the final `1e-6` learning-rate configuration.
+
+<p align="center">
+  <img src="screenshots/03_evaluation_85_93.png" alt="VisionQuery evaluation result">
+</p>
+
+The result should be interpreted within the project's controlled evaluation setup:
+
+* 500-question validation subset
+* Simplified VQAv2-style evaluation
+* Fixed random seed of 42
+* 3,000-example training subset
+* 1 training epoch
+
+This evaluation is intended to compare configurations consistently rather than represent an official full VQAv2 benchmark score.
 
 ---
 
@@ -367,6 +393,12 @@ FastAPI also provides interactive API documentation through:
 http://127.0.0.1:8000/docs
 ```
 
+### Backend Proof of Work
+
+<p align="center">
+  <img src="screenshots/05_fastapi_backend.png" alt="VisionQuery FastAPI backend">
+</p>
+
 ---
 
 # 🖥️ Next.js Frontend
@@ -408,9 +440,17 @@ Generated Answer
 Answer Displayed
 ```
 
+### Frontend Proof of Work
+
+<p align="center">
+  <img src="screenshots/06_vqa_frontend.png" alt="VisionQuery Next.js frontend">
+</p>
+
 ---
 
 # 🧪 Example Predictions
+
+The deployed inference pipeline was tested using multiple natural-language questions against an image.
 
 ### Example 1
 
@@ -422,6 +462,10 @@ Answer:
 girl
 ```
 
+<p align="center">
+  <img src="screenshots/04_vqa_what_is_the_image.png" alt="VisionQuery VQA inference: What is the image?">
+</p>
+
 ### Example 2
 
 ```text
@@ -431,6 +475,21 @@ What is the woman wearing?
 Answer:
 suit
 ```
+
+<p align="center">
+  <img src="screenshots/05_vqa_woman_wearing.png" alt="VisionQuery VQA inference: What is the woman wearing?">
+</p>
+
+### Example 3
+
+```text
+Question:
+What color is her suit?
+```
+
+<p align="center">
+  <img src="screenshots/06_vqa_suit_color.png" alt="VisionQuery VQA inference: What color is her suit?">
+</p>
 
 These examples demonstrate the system's ability to combine visual information with natural-language questions.
 
@@ -469,13 +528,13 @@ VisionQuery/
 │   └── visionquery_blip_vqa_3000_lr1e6/
 │
 ├── screenshots/
-│   ├── 01_proof_of_work.png
-│   ├── 02_training.png
-│   ├── 03_evaluation_results.png
-│   ├── 04_fastapi_backend.png
-│   ├── 05_vqa_frontend.png
-│   ├── 06_vqa_inference_1.png
-│   └── 07_vqa_inference_2.png
+│   ├── 01_training_subset_200.png
+│   ├── 02_training_progress_2709.png
+│   ├── 03_evaluation_85_93.png
+│   ├── 04_vqa_what_is_the_image.png
+│   ├── 05_vqa_woman_wearing.png
+│   ├── 06_vqa_suit_color.png
+│   └── 06_vqa_frontend.png
 │
 ├── requirements.txt
 ├── EXPERIMENT_LOG.md
