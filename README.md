@@ -1,201 +1,852 @@
 # VisionQuery — Visual Question Answering System
 
-VisionQuery is a portfolio project that fine-tunes a pretrained vision-language
-model (BLIP) to answer natural-language questions about images, wrapped in a
-simple Streamlit application.
+> Ask questions about images and let AI understand both the visual content and the language behind your question.
 
-> **Attribution note:** the general VQA project workflow was informed by
-> reviewing [varadbhogayata/visual-question-answering](https://github.com/varadbhogayata/visual-question-answering)
-> as a reference for how a VQA pipeline is typically structured. No code,
-> README text, or reported results from that repository are copied or reused
-> here — this is an independent implementation, and any numbers reported
-> below are this project's own measurements (or explicitly marked as not yet
-> measured).
+VisionQuery is an end-to-end **Visual Question Answering (VQA)** system where a pretrained **BLIP vision-language transformer** is further **trained and fine-tuned on 3,000 VQAv2 examples**. The project covers **supervised fine-tuning, learning-rate experimentation, model evaluation, checkpointing, and deployment through a FastAPI backend with a Next.js frontend**.
 
-## 1. Architecture
+---
 
-```
-Image ──┐
-        ├─► BlipProcessor ─► BlipForQuestionAnswering ─► generated answer tokens ─► decoded string
-Question┘        (Salesforce/blip-vqa-base, from Hugging Face Hub)
+# 🧠 What Problem Does VisionQuery Solve?
+
+Traditional computer vision systems can identify objects, while traditional NLP systems can understand questions and text.
+
+VisionQuery combines both capabilities.
+
+Instead of only asking:
+
+```text
+"What objects are present?"
 ```
 
-- **Vision encoder + text encoder/decoder**: both come from the pretrained
-  `Salesforce/blip-vqa-base` checkpoint. BLIP encodes the image with a ViT,
-  encodes the question with a text encoder, fuses the two via cross-attention,
-  and a text decoder generates the answer autoregressively.
-- **What's pretrained**: the entire backbone. We never train a vision or
-  language model from scratch.
-- **What's actually fine-tuned**: the same model's weights, continued via
-  standard supervised fine-tuning (cross-entropy on answer tokens) on a
-  configurable subset of VQAv2. This is what `src/train.py` does.
+VisionQuery allows users to ask questions such as:
 
-## 2. Project structure
-
+```text
+"What is the woman wearing?"
+"How many people are in the image?"
+"What is the image?"
+"What color is the car?"
+"Where is the person sitting?"
 ```
+
+The system processes both the **image** and the **natural-language question** and generates an answer based on their combined context.
+
+---
+
+# 🎯 Project Objective
+
+The main objective of VisionQuery is to build a complete and reproducible VQA pipeline covering:
+
+* Pretrained BLIP model initialization
+* VQAv2 dataset preparation
+* Controlled 3,000-example training subset
+* Supervised fine-tuning
+* Learning-rate experimentation
+* Model evaluation
+* Model checkpointing
+* Hugging Face model hosting
+* FastAPI inference
+* Next.js frontend integration
+* Reproducible experimentation
+
+---
+
+# 🔬 How VisionQuery Works
+
+```text
+                    Input Image
+                         |
+                         v
+              +----------------------+
+              |   BLIP Vision        |
+              |      Encoder         |
+              +----------------------+
+                         |
+                         v
+                 Visual Features
+                         |
+                         |
+User Question ----------+
+                         |
+                         v
+              +----------------------+
+              | Cross-Modal Attention|
+              +----------------------+
+                         |
+                         v
+              +----------------------+
+              | Autoregressive       |
+              | Text Decoder         |
+              +----------------------+
+                         |
+                         v
+                  Generated Answer
+```
+
+The complete workflow includes:
+
+```text
+Pretrained BLIP Model
+        |
+        v
+VQAv2 Dataset
+        |
+        v
+3,000 Training Examples
+        |
+        v
+Supervised Fine-Tuning
+        |
+        v
+Learning-Rate Experiments
+        |
+        v
+Evaluation
+        |
+        v
+Model Checkpoint
+        |
+        v
+Hugging Face Hub
+        |
+        v
+FastAPI Backend
+        |
+        v
+Next.js Frontend
+        |
+        v
+User Question + Image
+        |
+        v
+Generated Answer
+```
+
+---
+
+# 📸 Proof of Work
+
+The following screenshots show the actual **dataset preparation, controlled experimentation, evaluation, and end-to-end VQA inference** performed during the development of VisionQuery.
+
+<p align="center">
+  <img src="screenshots/01_proof_of_work.png" alt="VisionQuery proof of work">
+</p>
+
+---
+
+# 🤖 Model Architecture
+
+VisionQuery uses:
+
+```text
+Salesforce/blip-vqa-base
+```
+
+BLIP stands for **Bootstrapping Language-Image Pre-training**.
+
+The model is designed to understand relationships between visual information and natural language.
+
+### Main components
+
+```text
+Image
+  ↓
+Vision Encoder
+  ↓
+Visual Representation
+  ↓
+Cross-Modal Attention
+  ↓
+Question Representation
+  ↓
+Autoregressive Text Decoder
+  ↓
+Answer
+```
+
+The model combines:
+
+* Vision encoding
+* Language understanding
+* Cross-modal attention
+* Generative answer decoding
+
+---
+
+# 📊 Dataset
+
+VisionQuery uses the **VQAv2 (Visual Question Answering v2)** dataset.
+
+Dataset source:
+
+https://visualqa.org/
+
+For the controlled experiment, **3,000 VQAv2 examples** were selected for supervised fine-tuning, with a fixed **500-question validation subset** used for evaluation.
+
+### Final experiment
+
+| Parameter           | Value     |
+| ------------------- | --------- |
+| Training examples   | 3,000     |
+| Validation examples | 500       |
+| Random seed         | 42        |
+| GPU                 | NVIDIA T4 |
+| Epochs              | 1         |
+| Learning rate       | 1e-6      |
+
+The controlled subset makes experimentation faster and allows different configurations to be compared consistently.
+
+---
+
+# 🧪 Learning-Rate Experiments
+
+Different learning rates were evaluated using the same controlled setup.
+
+| Configuration            | Validation Accuracy |
+| ------------------------ | ------------------- |
+| Baseline BLIP pretrained | 85.87%              |
+| Fine-tuning, LR = 2e-5   | 54.87%              |
+| Fine-tuning, LR = 5e-6   | 79.20%              |
+| Fine-tuning, LR = 1e-6   | **85.93%**          |
+
+### Observation
+
+The experiments show that the learning rate has a significant effect on fine-tuning behavior.
+
+The `2e-5` configuration resulted in substantially lower validation performance, while the `1e-6` configuration remained close to the pretrained baseline.
+
+The final checkpoint therefore uses:
+
+```text
+Learning Rate: 1e-6
+Training Examples: 3,000
+Validation Examples: 500
+Epochs: 1
+Seed: 42
+```
+
+> **Important evaluation note:** The reported 85.93% result is obtained on the project's fixed 500-question validation subset using a simplified VQAv2-style evaluation procedure. It is **not** an official full VQAv2 benchmark or leaderboard score, and the project does not claim a large benchmark improvement over the pretrained BLIP model.
+
+---
+
+# 🏋️ Training Pipeline
+
+The fine-tuning process follows:
+
+```text
+VQAv2
+   |
+   v
+Dataset Filtering
+   |
+   v
+3,000 Training Examples
+   |
+   v
+Image + Question + Answer
+   |
+   v
+BLIP Processor
+   |
+   v
+BLIP-VQA Model
+   |
+   v
+Supervised Fine-Tuning
+   |
+   v
+Validation
+   |
+   v
+Checkpoint
+```
+
+Training was performed using:
+
+* PyTorch
+* Hugging Face Transformers
+* NVIDIA T4 GPU
+* VQAv2
+* BLIP VQA
+* Reproducible random seed
+
+---
+
+# 💾 Model Checkpoint
+
+The final fine-tuned model checkpoint is approximately **1.45 GB**.
+
+The checkpoint is hosted on Hugging Face rather than being committed directly to GitHub.
+
+### Hugging Face Model
+
+https://huggingface.co/Debangana-Dutta/visionquery-blip-vqa-3000-lr1e6
+
+Model configuration:
+
+```text
+Base Model:
+Salesforce/blip-vqa-base
+
+Training Examples:
+3,000
+
+Validation Examples:
+500
+
+Epochs:
+1
+
+Learning Rate:
+1e-6
+
+Random Seed:
+42
+```
+
+---
+
+# ⚡ FastAPI Backend
+
+VisionQuery provides a FastAPI backend for model inference.
+
+The primary endpoint is:
+
+```text
+POST /predict
+```
+
+The backend handles:
+
+```text
+Image Upload
+     |
+     v
+Image Validation
+     |
+     v
+Image Decoding
+     |
+     v
+RGB Conversion
+     |
+     v
+BLIP Preprocessing
+     |
+     v
+Model Inference
+     |
+     v
+Answer Decoding
+     |
+     v
+JSON Response
+```
+
+### API Response Example
+
+```json
+{
+  "answer": "suit",
+  "question": "What is the woman wearing?",
+  "model": "Salesforce/blip-vqa-base",
+  "fine_tuned": true,
+  "device": "cpu"
+}
+```
+
+### Available endpoints
+
+```text
+GET  /health
+POST /predict
+```
+
+FastAPI also provides interactive API documentation through:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+---
+
+# 🖥️ Next.js Frontend
+
+The frontend provides an interactive interface for VQA inference.
+
+### Main features
+
+* Image upload
+* Image preview
+* Natural-language question input
+* Backend API communication
+* Loading state
+* Generated answer display
+* Error handling
+* Responsive interface
+
+### Frontend workflow
+
+```text
+User Uploads Image
+        |
+        v
+User Enters Question
+        |
+        v
+Next.js Frontend
+        |
+        v
+FastAPI /predict
+        |
+        v
+BLIP VQA Model
+        |
+        v
+Generated Answer
+        |
+        v
+Answer Displayed
+```
+
+---
+
+# 🧪 Example Predictions
+
+### Example 1
+
+```text
+Question:
+What is the image?
+
+Answer:
+girl
+```
+
+### Example 2
+
+```text
+Question:
+What is the woman wearing?
+
+Answer:
+suit
+```
+
+These examples demonstrate the system's ability to combine visual information with natural-language questions.
+
+---
+
+# 📁 Project Structure
+
+```text
 VisionQuery/
+│
 ├── notebooks/
-│   ├── 01_baseline_inference.ipynb   # verify the pretrained model works
-│   ├── 02_dataset_preparation.ipynb  # download + inspect a VQAv2 subset
-│   ├── 03_finetuning.ipynb           # actually fine-tune, save checkpoint
-│   └── 04_evaluation.ipynb           # measure real VQA accuracy
+│   ├── 01_baseline_inference.ipynb
+│   ├── 02_dataset_preparation.ipynb
+│   ├── 03_finetuning.ipynb
+│   └── 04_evaluation.ipynb
+│
 ├── src/
-│   ├── dataset.py     # VQAv2 subset loading + preprocessing
-│   ├── model.py       # load/save the BLIP model + processor
-│   ├── train.py        # fine-tuning loop
-│   ├── evaluate.py    # official VQA accuracy metric + qualitative examples
-│   └── inference.py   # single (image, question) -> answer
+│   ├── dataset.py
+│   ├── model.py
+│   ├── train.py
+│   ├── evaluate.py
+│   └── inference.py
+│
 ├── app/
-│   └── app.py          # Streamlit application
+│   ├── app.py
+│   └── main.py
+│
+├── frontend/
+│   └── Next.js application
+│
 ├── configs/
-│   └── config.yaml    # every hyperparameter lives here
+│   └── config.yaml
+│
 ├── models/
-│   └── README.md      # where the real trained checkpoint goes (not shipped)
+│   ├── README.md
+│   └── visionquery_blip_vqa_3000_lr1e6/
+│
 ├── screenshots/
-│   └── README.md      # where to add your own app screenshots
+│   ├── 01_proof_of_work.png
+│   ├── 02_training.png
+│   ├── 03_evaluation_results.png
+│   ├── 04_fastapi_backend.png
+│   ├── 05_vqa_frontend.png
+│   ├── 06_vqa_inference_1.png
+│   └── 07_vqa_inference_2.png
+│
 ├── requirements.txt
-├── EXPERIMENT_LOG.md   # template for recording real training/eval results
+├── EXPERIMENT_LOG.md
 ├── LICENSE
 └── .gitignore
 ```
 
-## 3. Dataset
+---
 
-We use [VQAv2](https://visualqa.org/) via the Hugging Face `datasets` library
-(`HuggingFaceM4/VQAv2`), which provides images, questions, and ~10 human
-answers per question.
+# 🚀 Installation
 
-**We use a small, configurable subset, not the full dataset**, because the
-full VQAv2 train split (~443K questions) is not practical to train on
-repeatedly within a single Colab T4 session. Subset sizes are set in
-`configs/config.yaml`:
-
-```yaml
-dataset:
-  train_subset_size: 3000
-  val_subset_size: 500
-```
-
-Raise these numbers if you have more compute / longer sessions available —
-everything else in the pipeline (dataloaders, training loop, evaluation)
-works unchanged at any subset size.
-
-## 4. Training
-
-`src/train.py` (invoked from `notebooks/03_finetuning.ipynb`) fine-tunes BLIP
-with:
-- `AdamW` optimizer, linear warmup + decay schedule
-- Mixed precision (fp16) to fit comfortably on a T4
-- Gradient accumulation to reach a reasonable effective batch size on limited
-  GPU memory
-- Per-epoch checkpoint saving to `models/visionquery-finetuned/`
-- A CSV loss log (`models/train_log.csv`) with real train/val loss per epoch
-
-All of these are configurable in `configs/config.yaml` — nothing is
-hard-coded in `train.py` itself.
-
-## 5. Evaluation
-
-`src/evaluate.py` implements the **official VQA accuracy metric**:
-
-```
-accuracy(prediction) = min( (# human annotators who gave this exact answer) / 3, 1 )
-```
-
-averaged over the validation subset. This requires the multiple human
-answers VQAv2 provides per question, which `src/dataset.py` preserves for
-evaluation (`keep_all_answers=True`). It also saves a handful of qualitative
-examples (question, predicted answer, sample human answers) to
-`models/qualitative_examples/eval_results.json`.
-
-**No accuracy number in this repository is fabricated.** Until you run
-`notebooks/04_evaluation.ipynb` yourself, treat any accuracy figure as
-`[TO BE MEASURED]` — see `EXPERIMENT_LOG.md`.
-
-## 6. Application
-
-`app/app.py` is a Streamlit app: upload an image, type a question, click
-"Ask Question", see the predicted answer. It automatically uses your
-fine-tuned checkpoint from `models/visionquery-finetuned/` if present;
-otherwise it falls back to the base pretrained model and says so clearly in
-the UI (it never silently pretends to be using a fine-tuned model).
-
-## 7. Setup
+Clone the repository:
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/Debangana-Dutta/VisionQuery.git
 cd VisionQuery
-python -m venv venv && source venv/bin/activate   # or your preferred env tool
+```
+
+Create a virtual environment:
+
+```bash
+python -m venv venv
+```
+
+### Windows
+
+```bash
+venv\Scripts\activate
+```
+
+### Linux/macOS
+
+```bash
+source venv/bin/activate
+```
+
+Install dependencies:
+
+```bash
 pip install -r requirements.txt
 ```
 
-### Run baseline inference locally (no training needed)
-```bash
-python -c "
-from src.model import load_model
-from src.inference import answer_question
-from PIL import Image
+---
 
-processor, model, device, _ = load_model()
-image = Image.open('path/to/your/image.jpg')
-print(answer_question(image, 'what is in this picture?', processor, model, device))
-"
+# ▶️ Running the FastAPI Backend
+
+From the project root:
+
+```bash
+uvicorn app.main:app --reload
 ```
 
-### Run the app
+The backend will run at:
+
+```text
+http://127.0.0.1:8000
+```
+
+Open Swagger documentation:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+Health endpoint:
+
+```text
+http://127.0.0.1:8000/health
+```
+
+Prediction endpoint:
+
+```text
+POST http://127.0.0.1:8000/predict
+```
+
+---
+
+# 🌐 Running the Next.js Frontend
+
+Navigate to the frontend:
+
+```bash
+cd frontend
+```
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+Open:
+
+```text
+http://localhost:3000
+```
+
+---
+
+# 📱 Streamlit Prototype
+
+The project also includes a Streamlit prototype.
+
+Run:
+
 ```bash
 streamlit run app/app.py
 ```
 
-## 8. Reproducing on Google Colab
+This provides a lightweight interface for testing VQA inference.
 
-1. Upload the `VisionQuery/` folder to Google Drive, or `git clone` your repo
-   into a Colab notebook.
-2. Open `notebooks/01_baseline_inference.ipynb` in Colab.
-3. **Runtime → Change runtime type → T4 GPU.**
-4. Run all cells top to bottom. Repeat for notebooks 02, 03, 04 **in that
-   order** (02 needs no GPU but caches the dataset; 03 needs the GPU for
-   fine-tuning; 04 needs the checkpoint from 03).
-5. After 03 finishes, download the checkpoint (see `models/README.md`) if you
-   want to run the Streamlit app locally.
+---
 
-## 9. Reproducibility
+# 🔁 Reproducibility
 
-- Random seed fixed via `configs/config.yaml` (`reproducibility.seed`, default 42).
-- Exact `torch`/`transformers`/CUDA versions and GPU model should be recorded
-  by running notebook 01's environment-check cell and pasted into
-  `configs/config.yaml`'s `reproducibility` section and `EXPERIMENT_LOG.md`.
+Experiments use:
 
-## 10. Limitations
+```text
+Random Seed = 42
+```
 
-- The model is fine-tuned on a small subset of VQAv2 (thousands, not
-  hundreds of thousands, of examples) due to Colab T4 constraints, so
-  accuracy will be meaningfully below published full-dataset VQAv2 numbers.
-- BLIP-VQA generates short, extractive-style answers; it is not designed for
-  long, explanatory answers.
-- No hyperparameter search was performed beyond the defaults in
-  `configs/config.yaml` — see `EXPERIMENT_LOG.md` for what was actually tried.
-- Evaluation is run on a validation subset, not the full official VQAv2
-  validation/test-dev split, so reported accuracy is only directly comparable
-  to other runs of this same project, not to leaderboard numbers.
+The project records:
 
-## 11. Future improvements
+* Dataset configuration
+* Training subset size
+* Validation subset size
+* Learning rate
+* Number of epochs
+* Model configuration
+* Evaluation results
+* Experiment details
 
-- Scale `train_subset_size` up (more compute / longer sessions / a paid GPU tier).
-- Try partial fine-tuning (freeze the vision encoder, only tune the text
-  decoder) to fit larger batch sizes.
-- Add a simple hyperparameter sweep (learning rate, epochs) and log each run
-  in `EXPERIMENT_LOG.md`.
-- Deploy the Streamlit app (e.g. Streamlit Community Cloud or Hugging Face
-  Spaces) once a checkpoint is trained and its size is confirmed to fit the
-  target platform's limits.
-- Add basic answer-type breakdown (yes/no vs. number vs. other) to the
-  evaluation report for more informative error analysis.
+This makes the experiments easier to reproduce and compare.
 
-## 12. Credits
+---
 
-- Model: [Salesforce/blip-vqa-base](https://huggingface.co/Salesforce/blip-vqa-base)
-  (Li et al., *BLIP: Bootstrapping Language-Image Pre-training*).
-- Dataset: [VQAv2](https://visualqa.org/) (Goyal et al., 2017), accessed via
-  the `HuggingFaceM4/VQAv2` Hugging Face dataset.
-- Workflow reference (not code/results): [varadbhogayata/visual-question-answering](https://github.com/varadbhogayata/visual-question-answering).
+# 📈 Evaluation Philosophy
+
+The project focuses on **controlled experimentation rather than claiming benchmark-level improvements**.
+
+The evaluation compares:
+
+```text
+Pretrained BLIP
+       vs
+Fine-Tuned BLIP
+       |
+       +--> Different Learning Rates
+```
+
+This allows the effect of fine-tuning configuration to be observed under the same controlled validation setup.
+
+---
+
+# ⚠️ Limitations
+
+The current implementation has several limitations:
+
+* Training uses a relatively small subset of VQAv2.
+* Fine-tuning was limited to one epoch.
+* Experiments were performed on a fixed validation subset.
+* The reported accuracy is not an official full VQAv2 benchmark score.
+* Only a limited learning-rate sweep was performed.
+* Generative VQA evaluation can be sensitive to answer normalization.
+* CPU inference is slower than GPU inference.
+* The current model does not provide calibrated confidence scores.
+* The system may struggle with complex reasoning, counting, spatial relationships, or uncommon objects.
+* Large model checkpoints are not stored directly in the Git repository.
+
+---
+
+# 🔮 Future Improvements
+
+### Model & Training
+
+* Train on a larger portion of VQAv2.
+* Increase the number of training epochs.
+* Perform broader hyperparameter sweeps.
+* Experiment with learning-rate schedules.
+* Explore parameter-efficient fine-tuning such as LoRA/PEFT.
+* Compare different BLIP checkpoints.
+* Experiment with larger vision-language models.
+
+### Evaluation
+
+* Evaluate on the complete VQAv2 validation set.
+* Implement the official VQAv2 evaluation procedure.
+* Perform question-category analysis.
+* Analyze common failure cases.
+* Measure inference latency.
+* Add confidence estimation.
+
+### Deployment
+
+* GPU-based inference deployment.
+* Model quantization.
+* ONNX optimization where appropriate.
+* Batch inference support.
+* Better API monitoring.
+* Experiment tracking and model versioning.
+
+### Frontend
+
+* Improved visual design.
+* Answer history.
+* Multiple image support.
+* Question suggestions.
+* Confidence visualization.
+* Detailed prediction metadata.
+* Better error and loading states.
+
+---
+
+# 🛠️ Tech Stack
+
+### Machine Learning
+
+* Python
+* PyTorch
+* Hugging Face Transformers
+* BLIP
+* VQAv2
+
+### Backend
+
+* FastAPI
+* Uvicorn
+* REST API
+* CORS
+
+### Frontend
+
+* Next.js
+* React
+* TypeScript
+* Tailwind CSS
+
+### Development & Deployment
+
+* Google Colab
+* NVIDIA T4
+* Hugging Face Hub
+* Git
+* GitHub
+
+---
+
+# 📚 Notebooks
+
+The project is organized into separate notebooks for reproducibility and experimentation.
+
+### 01 — Baseline Inference
+
+Tests the pretrained BLIP model before fine-tuning.
+
+### 02 — Dataset Preparation
+
+Loads VQAv2 and creates the controlled training and validation subsets.
+
+### 03 — Fine-Tuning
+
+Performs supervised fine-tuning with the selected configuration.
+
+### 04 — Evaluation
+
+Evaluates the pretrained and fine-tuned configurations and records the results.
+
+---
+
+# 📝 Experiment Log
+
+Experiment details are maintained in:
+
+```text
+EXPERIMENT_LOG.md
+```
+
+The log records the configurations and results of the experiments so that different training runs can be compared systematically.
+
+---
+
+# 🔗 Resources
+
+GitHub Repository:
+
+https://github.com/Debangana-Dutta/VisionQuery
+
+Hugging Face Model:
+
+https://huggingface.co/Debangana-Dutta/visionquery-blip-vqa-3000-lr1e6
+
+VQAv2:
+
+https://visualqa.org/
+
+---
+
+# 📖 Reference & Attribution
+
+The project workflow was informed by reviewing:
+
+https://github.com/varadbhogayata/visual-question-answering
+
+No code, README text, or reported experimental results were copied or reused from that repository.
+
+The project was independently implemented around the BLIP architecture, VQAv2 dataset, controlled fine-tuning experiments, and a custom FastAPI + Next.js application pipeline.
+
+---
+
+# 📜 Credits
+
+### BLIP
+
+The project uses the BLIP vision-language architecture and the pretrained:
+
+```text
+Salesforce/blip-vqa-base
+```
+
+### VQAv2
+
+The project uses the Visual Question Answering v2 dataset for training and evaluation.
+
+---
+
+# 👩‍💻 Author
+
+**Debangana Dutta**
+
+B.Tech (Hons.) Computer Science & Engineering
+XIM University, Bhubaneswar
+
+GitHub:
+
+https://github.com/Debangana-Dutta
+
+---
+
+# ⭐ Project Summary
+
+VisionQuery demonstrates a complete **multimodal AI application pipeline**:
+
+```text
+VQAv2 Dataset
+      ↓
+3,000 Training Examples
+      ↓
+BLIP Pretrained Model
+      ↓
+Supervised Fine-Tuning
+      ↓
+Learning-Rate Experiments
+      ↓
+Model Evaluation
+      ↓
+Checkpointing
+      ↓
+Hugging Face
+      ↓
+FastAPI Backend
+      ↓
+Next.js Frontend
+      ↓
+Interactive Visual Question Answering
+```
+
+The project brings together **computer vision, natural language processing, multimodal learning, model fine-tuning, experimentation, evaluation, API development, and frontend engineering** into one end-to-end VQA system.
