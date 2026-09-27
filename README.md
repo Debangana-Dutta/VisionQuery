@@ -393,12 +393,6 @@ FastAPI also provides interactive API documentation through:
 http://127.0.0.1:8000/docs
 ```
 
-### Backend Proof of Work
-
-<p align="center">
-  <img src="screenshots/05_fastapi_backend.png" alt="VisionQuery FastAPI backend">
-</p>
-
 ---
 
 # 🖥️ Next.js Frontend
@@ -439,12 +433,6 @@ Generated Answer
         v
 Answer Displayed
 ```
-
-### Frontend Proof of Work
-
-<p align="center">
-  <img src="screenshots/06_vqa_frontend.png" alt="VisionQuery Next.js frontend">
-</p>
 
 ---
 
